@@ -37,7 +37,7 @@ IFS=";"
 {
     read; # skip header
     while read -a line; do
-        echo "gen: $(generate_post_data line)"
+        echo "body: $(generate_post_data line)"
 
         curl -X PUT \
              -H "Accept: application/json" \
