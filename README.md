@@ -6,7 +6,8 @@ See [INSTRUCTIONS.md](./INSTRUCTIONS.md)
 
 ### How to run it
 
-start the server: `mvn spring-boot:run`
+1) Initial the database: `./init-docker-db.sh`
+2) start the server: `mvn spring-boot:run`
 
 ### Run test
 1) start the server
