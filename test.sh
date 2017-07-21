@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-host=${host:-localhost}
-port=${port:-8080}
-actual=${test_filename:-test.actual.csv}
-expected=${test_filename:-test.expected.csv}
+host=${HOST:-localhost}
+port=${PORT:-8080}
+actual=${TEST_FILENAME:-test.actual.csv}
+expected=${TEST_FILENAME:-test.expected.csv}
 
 generate_post_data()
 {
