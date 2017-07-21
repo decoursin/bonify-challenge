@@ -1,3 +1,19 @@
+#### Challenge:
+
+Given a user with a bank account, this user gets updates through a synchronisation web hook. The data that is received through the web hook should be attached to the account that is identified in the request. 
+
+Whenever the spending exceeds 500 Euro in a 10 day time window, the user should be notified (by calling a send notification mock)
+
+Please create a basic system and a test given the attached files as input for the account transactions. There should be an endpoint where the data (with an additional account-identifier) arrive and will be stored into a database. Assume the input may have duplicate entries, which might need to be filtered out. 
+
+The system must be written in Java, but feel free to use the frameworks that best suit you.
+
+Expected Deliverables:
+Unit-Test calling the web hook and testing that the data is in the database without duplicates
+Controller for Web hook 
+All other classes to reflect your design and create a runnable application.
+
+---------------------------------------------------------------------------
 >> Given a user with a bank account, this user gets updates through a synchronisation web hook. The data that is received through the web hook should be attached to the account that is identified in the request. 
 
 > Build a REST API that accepts updates to a user's bank account.
