@@ -1,3 +1,4 @@
+#! /bin/bash
 
 db_name=${DB_NAME:-"bonify"}
 port=${PORT:-5432}
