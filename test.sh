@@ -39,11 +39,18 @@ IFS=";"
     while read -a line; do
         echo "body: $(generate_post_data line)"
 
-        curl -X PUT \
-             -H "Accept: application/json" \
-             -H "Content-Type: application/json" \
-             --data "$(generate_post_data line)" \
-             "$host:$port/transaction"
+        response_code=$(curl --silent --show-error -X PUT \
+                         --write-out '%{http_code}' \
+                         --output /dev/null \
+                         -H "Accept: application/json" \
+                         -H "Content-Type: application/json" \
+                         --data "$(generate_post_data line)" \
+                         "$host:$port/transaction")
+
+        if (( $response_code >= 300 )); then
+            echo "Error! Unsuccessful request, exiting..."
+            exit 1;
+        fi
     done
 } < account.csv
 
@@ -53,5 +60,5 @@ if [ "$DIFF" != "" ]
 then
     echo "FAILING TEST! $DIFF"
 else
-	echo "Test pass! Nice job."
+    echo "Test pass! Nice job."
 fi

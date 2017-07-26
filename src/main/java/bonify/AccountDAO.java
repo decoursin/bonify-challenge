@@ -1,9 +1,9 @@
 package bonify;
 
-import com.jcabi.jdbc.JdbcSession;
-import com.jcabi.jdbc.Outcome;
-import com.jcabi.jdbc.SingleOutcome;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -13,76 +13,66 @@ import java.util.Optional;
 @Repository
 public class AccountDAO {
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     /**
      * Returns the user's spending in the past 10 days.
      *
      * Notice, the user's income (positive transactions) is not added to spending, but filtered out.
      *
      * @param partnerAccount User's account number
-     * @param bookingDate the Date of purchase
-     *
+     * @param bookingDate    the Date of purchase
      * @return the amount of spending: a positive number.
      */
-    public static BigDecimal getSpendingIn10DayWindow(String partnerAccount, Date bookingDate) throws java.sql.SQLException {
-        try {
-            System.out.println("partnerAccount=" + partnerAccount + " bookingDate=" + bookingDate);
+    public BigDecimal getSpendingIn10DayWindow(String partnerAccount, Date bookingDate) {
+        System.out.println("partnerAccount=" + partnerAccount + " bookingDate=" + bookingDate);
 
-            Date start = Date.from(bookingDate.toInstant().minus(Duration.ofDays(10)));
+        Date start = Date.from(bookingDate.toInstant().minus(Duration.ofDays(10)));
 
-            JdbcSession session = new JdbcSession(DatabaseConfig.DATA_SOURCE.getConnection())
-                .autocommit(false)
-                .sql("select sum(amount) " +
-                    " from account" +
-                    " where partner_account = ?" +
-                    " and amount < 0" +
-                    " and booking_date > CAST (? as timestamp with time zone)" +
-                    " and booking_date <= CAST (? as timestamp with time zone)")
-                .set(partnerAccount)
-                .set(start)
-                .set(bookingDate);
+        String sql = " select sum(amount) " +
+            " from account" +
+            " where partner_account = ?" +
+            " and amount < 0" +
+            " and booking_date > CAST (? as timestamp with time zone)" +
+            " and booking_date <= CAST (? as timestamp with time zone)";
 
-            BigDecimal spending = Optional.ofNullable(session.select(new SingleOutcome<>(String.class)))
-                .map(BigDecimal::new)
-                .orElse(BigDecimal.ZERO)
-                .abs();
+        BigDecimal spending = Optional.ofNullable(jdbcTemplate.queryForObject(
+            sql,
+            String.class,
+            partnerAccount,
+            start,
+            bookingDate
+        ))
+            .map(BigDecimal::new)
+            .orElse(BigDecimal.ZERO)
+            .abs();
 
-            System.out.println("spending=" + spending);
+        System.out.println("spending=" + spending);
 
-            session.commit();
-
-            return spending;
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            throw e;
-        }
+        return spending;
     }
 
-    public static void insert(Transaction transaction) {
-        try {
-            JdbcSession session = new JdbcSession(DatabaseConfig.DATA_SOURCE.getConnection())
-                .autocommit(false)
-                .sql("INSERT INTO account " +
-                    " (partner_account, partner_blz, bank_name, partner_name, booking_text, subject, booking_date, transfer_type, currency, amount)" +
-                    " VALUES (?,?,?,?,?,?, CAST (? AS timestamp with time zone) ,?,?, CAST (? AS numeric))")
-                .set(transaction.getPartnerAccount())
-                .set(transaction.getPartnerBLZ())
-                .set(transaction.getBankName())
-                .set(transaction.getPartnerName())
-                .set(transaction.getBookingText())
-                .set(transaction.getSubject())
-                .set(transaction.getBookingDate())
-                .set(transaction.getTransferType())
-                .set(transaction.getCurrency())
-                .set(transaction.getAmount());
+    @Transactional
+    public Boolean insert(Transaction transaction) {
+        String sql = "INSERT INTO account " +
+            " (partner_account, partner_blz, bank_name, partner_name, booking_text, subject, booking_date, transfer_type, currency, amount)" +
+            " VALUES (?,?,?,?,?,?, CAST (? AS timestamp with time zone) ,?,?, CAST (? AS numeric))";
 
-            Integer update = session.insert(Outcome.UPDATE_COUNT);
+        int success = jdbcTemplate.update(
+            sql,
+            transaction.getPartnerAccount(),
+            transaction.getPartnerBLZ(),
+            transaction.getBankName(),
+            transaction.getPartnerName(),
+            transaction.getBookingText(),
+            transaction.getSubject(),
+            transaction.getBookingDate(),
+            transaction.getTransferType(),
+            transaction.getCurrency(),
+            transaction.getAmount()
+        );
 
-            System.out.println("update: " + update);
-
-            session.commit();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        return success > 0 ? Boolean.TRUE : Boolean.FALSE;
     }
 }
